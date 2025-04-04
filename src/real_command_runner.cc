@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #if defined(__linux__) || defined(__GLIBC__)
+#include <inttypes.h>
 #include <sys/sysinfo.h>
 #endif
 
@@ -62,8 +63,21 @@ size_t RealCommandRunner::CanRunMore() const {
     struct sysinfo si;
     if (sysinfo(&si) == 0) {
       int64_t used_ram = (si.totalram - si.freeram) * si.mem_unit;
-      capacity = config_.max_used_memory - used_ram;
+      int64_t mem_capacity = config_.max_used_memory - used_ram;
+      // fprintf(stderr,
+      //         "limit: %" PRId64 " used_ram: %" PRId64 " capacity %" PRId64
+      //         "\n", config_.max_used_memory, used_ram, mem_capacity);
+      if (mem_capacity < 0) {
+        fprintf(stderr,
+                "Memory limit reached (%" PRId64 " lacking), throttling\n",
+                mem_capacity);
+        capacity = 0;
+      } else {
+        fprintf(stderr, "OK, %" PRId64 " RAM remaining\n", mem_capacity);
+      }
     }
+  } else {
+    fprintf(stderr, "Memory limit not yet set...");
   }
 #endif
 
@@ -74,6 +88,7 @@ size_t RealCommandRunner::CanRunMore() const {
     // Ensure that we make progress.
     capacity = 1;
 
+  fprintf(stderr, "final capacity: %ld\n", capacity);
   return capacity;
 }
 
