@@ -1691,7 +1691,8 @@ int ReadFlags(int* argc, char*** argv,
         int value = strtol(optarg, &end, 10);
         if (*end != 0 || value < 0)
           Fatal("invalid -m parameter");
-        config->max_used_memory = value > 0 ? (value * 1024 * 1024) : 0;
+        config->max_used_memory = value > 0 ? ((int64_t)value * 1024 * 1024) : 0;
+        printf("Memory limit configured: %" PRId64 "\n", config->max_used_memory);
         break;
       }
       case 'n':
